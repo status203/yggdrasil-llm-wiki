@@ -1,0 +1,40 @@
+#!/bin/sh
+# Refuse a commit whose staged lines carry a value outside the technical well, before it
+# reaches history; .yg/bin/check-leaks.sh states what that covers, and its notice rows,
+# the URLs it let through in a docs: folder, pass straight to stderr. The system review
+# runs the same check over the tree.
+#
+# Then the integration review's backstop (D19.3): a commit that adds, deletes or renames a
+# file under .yg/, .claude/ or .claude-plugin/ (the program, D4.1.1), or edits the catalog,
+# may change how the program operates. Say so and commit anyway, since running the review
+# is the session's call. The folders are matched by path, explicitly not through
+# check-system.sh's sets, so a deleted file and a file in a new folder are caught too.
+# A refused commit prints no notice, and a merge none, since it stages whatever the merge
+# brought in; the leak check still runs on a merge.
+#
+# Wired per checkout by the line install.sh prints, which sets core.hooksPath and keeps
+# this file's exec bit (F22.2). Deliberate exception: `git commit --no-verify`.
+#
+# Cost: not timed — check-leaks.sh's staged run, which reads only the lines staged, and
+# one pass over the staged path list.
+HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+sh "$HERE/../bin/check-leaks.sh" --staged "$(git rev-parse --show-toplevel)" >&2
+case $? in
+  0) ;;
+  1) echo "Refused: each row above without a prefix is a value outside the technical well (.yg/technical-well.txt). Replace it with a placeholder or a reserved example name; a real value the program needs goes to the user to add to the well, and so does a forge-wiki folder that cites the web, under docs:. Rows starting notice: were let through: read each for a private repository or service before the commit is pushed." >&2; exit 1 ;;
+  *) echo "Refused: the leak check could not run, so this commit is unchecked." >&2; exit 1 ;;
+esac
+
+[ -e "$(git rev-parse --git-dir)/MERGE_HEAD" ] && exit 0
+
+program() { case $1 in .yg/* | .claude/* | .claude-plugin/*) return 0 ;; esac; return 1; }
+hit=$(git -c core.quotePath=false diff --cached --name-status -M | while IFS='	' read -r st a b; do
+  case $st in
+    A | D) program "$a" && echo "$a" ;;
+    R*) if program "$b"; then echo "$b"; elif program "$a"; then echo "$a"; fi ;;
+    M) [ "$a" = .yg/forge-catalog.md ] && echo "$a" ;;
+  esac
+done)
+[ -n "$hit" ] && printf 'Notice: %s — if this changes how the program operates, run /yggdrasil:integration-review (base %s).\n' \
+  "$(printf '%s\n' "$hit" | paste -sd ' ' -)" "$(git rev-parse --short HEAD)" >&2
+exit 0

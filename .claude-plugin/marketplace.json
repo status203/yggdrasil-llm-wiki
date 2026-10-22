@@ -1,0 +1,11 @@
+{
+  "name": "yggdrasil",
+  "owner": { "name": "Yggdrasil" },
+  "plugins": [
+    {
+      "name": "yggdrasil",
+      "description": "LLM wiki: a person reads and edits a wiki in Obsidian, and an LLM maintains it alongside them.",
+      "source": "./"
+    }
+  ]
+}

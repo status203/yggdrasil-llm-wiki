@@ -1,0 +1,30 @@
+# Resolved config: generated from the config layers at session start
+/.yg/resolved/
+
+# Per-machine permission allowlists
+.claude/settings.local.json
+
+# Worktrees, each a checkout of its own that whole-tree staging would add as an embedded repository
+/.claude/worktrees/
+
+# Forge and review ledgers' default folders: findings and dispositions stay local unless a
+# user layer points them elsewhere, since a disposition's reason is the conversation behind it
+/.yg/ledgers/content/
+/.yg/ledgers/system/
+/.yg/ledgers/harness/
+/.yg/ledgers/forge/
+
+# Every top-level dot folder but the program's own and the forge wiki's records: Obsidian's
+# config folder, whatever a reader calls it (F13.2), holds their own workspace, appearance and
+# plugin data, and stays out of a public program
+/.*/
+!/.yg/
+!/.claude/
+!/.claude-plugin/
+!/.github/
+!/.sources/
+
+# The transcribe drop-zone: transcripts wait here until disposed of and are never committed
+# from it. An external wiki ignores its contents and keeps an import/.gitkeep (init.sh);
+# the forge wiki keeps no placeholder, so the folder is ignored whole
+/import/

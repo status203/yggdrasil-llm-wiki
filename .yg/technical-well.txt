@@ -1,0 +1,47 @@
+# The technical well: the only values a system file may carry where a path, email
+# address, URL host or IP address appears. A file in a folder listed under docs:, at the
+# foot of this file, may also carry a named URL host. Read by .yg/bin/check-leaks.sh,
+# which refuses any value of those shapes that no line here matches.
+#
+# One ERE per line, matched against each value found; a line starting with '#' is a
+# comment. Before matching, ${HOME} and $HOME read as ~, any other ${...} or $NAME as
+# VAR, and an angle-bracket placeholder such as <wiki> as PH.
+#
+# Additions go to the user, as with the topic well in CLAUDE.md: an entry admits every
+# value it matches, in every file, from then on.
+
+# Placeholders
+^~/\.
+^~/PH(/|$)
+^~/VAR(/|$)
+^/home/PH(/|$)
+^/Users/PH(/|$)
+^[A-Za-z]:\\Users\\PH(\\|$)
+^/tmp/PH(/|$)
+
+# Names reserved for examples: RFC 2606 domains and RFC 5737 documentation addresses
+@example\.(com|org|net)$
+^([A-Za-z0-9-]+\.)*example\.(com|org|net)$
+^(192\.0\.2|198\.51\.100|203\.0\.113)\.[0-9]+$
+
+# Real values the program needs
+^/dev/(null|stderr)$
+^/bin/sh$
+^/usr/bin/env$
+# The OS release file, where check-system.sh reads the installed system's version.
+^/etc/os-release$
+# The SVG namespace, which every inline diagram declares.
+^www\.w3\.org$
+# Where the whisper adapter downloads its speech and VAD models, after asking consent.
+^huggingface\.co$
+# A .gitignore anchors a path at the repository root, and the program's start with a
+# dot folder; no machine path does.
+^/\.
+
+# Forge-wiki folders whose files may also carry a named URL host. A folder not listed is
+# held to the well like any program file, so the first commit citing the web from a new
+# folder is refused, and listing it goes to the user. One "docs: <ERE>" per line, matched
+# against the path from the repository root. check-system.sh reports an entry that
+# matches no tracked file.
+# The research behind the program's design, which cites its sources by link.
+docs: ^References/

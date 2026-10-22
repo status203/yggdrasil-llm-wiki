@@ -1,0 +1,16 @@
+{
+  "name": "yggdrasil",
+  "description": "LLM wiki: a person reads and edits a wiki in Obsidian, and an LLM maintains it alongside them.",
+  "license": "AGPL-3.0-only",
+  "hooks": "./.yg/hooks/hooks.json",
+  "outputStyles": "./.yg/output-styles/",
+  "skills": "./.yg/skills/",
+  "agents": [
+    "./.yg/agents/bragi.md",
+    "./.yg/agents/hugin.md",
+    "./.yg/agents/mimir.md",
+    "./.yg/agents/munin.md",
+    "./.yg/agents/tyr.md",
+    "./.yg/agents/volund.md"
+  ]
+}

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lucena position — building the bridge, move by move</title>
+<style>
+body { font-family: sans-serif; color: #222222; background: #fafafa; margin: 2em auto; max-width: 420px; }
+h1 { font-size: 1.15em; }
+.controls { display: flex; gap: 0.5em; margin: 0.8em 0; }
+button { font-size: 1em; padding: 0.35em 0.8em; cursor: pointer; }
+#move { font-weight: bold; font-size: 1.1em; margin-top: 0.4em; }
+#note { margin-top: 0.3em; line-height: 1.4; min-height: 4.5em; }
+.hint { color: #666666; font-size: 0.85em; }
+</style>
+</head>
+<body>
+<h1>Building the bridge — the main line, one move at a time</h1>
+<p class="hint">Step 3 of the Lucena position tutorial. White at the bottom. Use the buttons or the left and right arrow keys.</p>
+<div id="board"></div>
+<div class="controls">
+<button id="first" type="button">Start</button>
+<button id="back" type="button">Back</button>
+<button id="fwd" type="button">Forward</button>
+<button id="last" type="button">End</button>
+</div>
+<div id="move"></div>
+<div id="note"></div>
+<p class="hint" id="count"></p>
+<script>
+var STEPS = [
+ {
+  "fen": "3K4/3P2k1/8/8/8/8/2r5/5R2",
+  "move": "Start",
+  "note": "The standard Lucena position, White to move."
+ },
+ {
+  "fen": "3K4/3P2k1/8/8/5R2/8/2r5/8",
+  "move": "1.Rf4",
+  "note": "Rook up: the rook climbs its own file to the fourth rank. The wall on the f-file still stands."
+ },
+ {
+  "fen": "3K4/3P2k1/8/8/5R2/8/8/2r5",
+  "move": "1...Rc1",
+  "note": "Black waits, its rook still on the c-file, so c7 and c8 stay shut."
+ },
+ {
+  "fen": "8/3PK1k1/8/8/5R2/8/8/2r5",
+  "move": "2.Ke7",
+  "note": "King out: onto e7, the square the cut-off keeps open. White threatens 3.d8=Q."
+ },
+ {
+  "fen": "8/3PK1k1/8/8/5R2/8/8/4r3",
+  "move": "2...Re1+",
+  "note": "Black checks from behind, far down the e-file."
+ },
+ {
+  "fen": "8/3P2k1/3K4/8/5R2/8/8/4r3",
+  "move": "3.Kd6",
+  "note": "King down: off the e-file, still beside the pawn."
+ },
+ {
+  "fen": "8/3P2k1/3K4/8/5R2/8/8/3r4",
+  "move": "3...Rd1+",
+  "note": "Check up the d-file."
+ },
+ {
+  "fen": "8/3P2k1/4K3/8/5R2/8/8/3r4",
+  "move": "4.Ke6",
+  "note": "King down: sideways, staying beside the pawn while Black's rook is on the pawn's file."
+ },
+ {
+  "fen": "8/3P2k1/4K3/8/5R2/8/8/4r3",
+  "move": "4...Re1+",
+  "note": "Check up the e-file again."
+ },
+ {
+  "fen": "8/3P2k1/8/3K4/5R2/8/8/4r3",
+  "move": "5.Kd5",
+  "note": "King down: onto d5, right above d4. Black's rook is off the pawn's file, so the king can leave the pawn."
+ },
+ {
+  "fen": "8/3P2k1/8/3K4/5R2/8/8/3r4",
+  "move": "5...Rd1+",
+  "note": "Black checks up the d-file once more."
+ },
+ {
+  "fen": "8/3P2k1/8/3K4/3R4/8/8/3r4",
+  "move": "6.Rd4",
+  "note": "Rook across: the bridge. The rook blocks the check on a square the king protects, and Black's rook has no open line left to check along. The pawn promotes next move."
+ }
+];
+var i = 0;
+var NS = "http://www.w3.org/2000/svg";
+function el(name, attrs, text) {
+  var e = document.createElementNS(NS, name);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  if (text) e.textContent = text;
+  return e;
+}
+function draw(fen) {
+  var svg = el("svg", {width: "340", height: "340", viewBox: "0 0 340 340", role: "img"});
+  for (var r = 0; r < 8; r++) for (var f = 0; f < 8; f++) {
+    svg.appendChild(el("rect", {x: 20 + 40 * f, y: 40 * r, width: 40, height: 40, fill: (r + f) % 2 ? "#b58863" : "#f0d9b5"}));
+  }
+  svg.appendChild(el("rect", {x: 20, y: 0, width: 320, height: 320, fill: "none", stroke: "#333333", "stroke-width": 1}));
+  for (var n = 0; n < 8; n++) {
+    svg.appendChild(el("text", {x: 10, y: 24 + 40 * n, "font-size": 12, "text-anchor": "middle", fill: "#333333"}, String(8 - n)));
+    svg.appendChild(el("text", {x: 40 + 40 * n, y: 335, "font-size": 12, "text-anchor": "middle", fill: "#333333"}, "abcdefgh"[n]));
+  }
+  var rows = fen.split("/");
+  for (var rr = 0; rr < 8; rr++) {
+    var file = 0;
+    for (var j = 0; j < rows[rr].length; j++) {
+      var ch = rows[rr][j];
+      if (/[1-8]/.test(ch)) { file += parseInt(ch, 10); continue; }
+      var white = ch === ch.toUpperCase();
+      var cx = 40 + 40 * file, cy = 20 + 40 * rr;
+      svg.appendChild(el("circle", {cx: cx, cy: cy, r: 15, fill: white ? "#ffffff" : "#222222", stroke: "#222222", "stroke-width": 2}));
+      svg.appendChild(el("text", {x: cx, y: cy + 6, "font-size": 16, "font-weight": "bold", "text-anchor": "middle", fill: white ? "#222222" : "#ffffff"}, ch.toUpperCase()));
+      file++;
+    }
+  }
+  return svg;
+}
+function show() {
+  var s = STEPS[i];
+  var b = document.getElementById("board");
+  b.innerHTML = "";
+  b.appendChild(draw(s.fen));
+  document.getElementById("move").textContent = s.move;
+  document.getElementById("note").textContent = s.note;
+  document.getElementById("count").textContent = "Position " + i + " of " + (STEPS.length - 1);
+  document.getElementById("back").disabled = document.getElementById("first").disabled = i === 0;
+  document.getElementById("fwd").disabled = document.getElementById("last").disabled = i === STEPS.length - 1;
+}
+function go(n) { i = Math.max(0, Math.min(STEPS.length - 1, n)); show(); }
+document.getElementById("first").onclick = function () { go(0); };
+document.getElementById("back").onclick = function () { go(i - 1); };
+document.getElementById("fwd").onclick = function () { go(i + 1); };
+document.getElementById("last").onclick = function () { go(STEPS.length - 1); };
+document.addEventListener("keydown", function (e) {
+  if (e.key === "ArrowRight") go(i + 1);
+  if (e.key === "ArrowLeft") go(i - 1);
+});
+show();
+</script>
+</body>
+</html>

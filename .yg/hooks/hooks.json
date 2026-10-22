@@ -1,0 +1,63 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/.yg/hooks/resolve-config.sh\" \"$CLAUDE_PROJECT_DIR\""
+          },
+          {
+            "type": "command",
+            "command": "if grep -q '^wiki\\.format:' \"$CLAUDE_PROJECT_DIR/.yg/config.conf\" 2>/dev/null; then sh \"${CLAUDE_PLUGIN_ROOT}/.yg/bin/regen-views.sh\" \"$CLAUDE_PROJECT_DIR\" stale >/dev/null; fi"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/.yg/hooks/inject-rules.sh\" \"$CLAUDE_PROJECT_DIR\" SessionStart"
+          }
+        ]
+      },
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/.yg/bin/review-status.sh\" \"$CLAUDE_PROJECT_DIR\" notice"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/.yg/hooks/inject-rules.sh\" \"$CLAUDE_PROJECT_DIR\" SubagentStart"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read|Write|Edit|NotebookEdit|Glob|Grep|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/.yg/hooks/wiki-boundary.sh\" \"$CLAUDE_PROJECT_DIR\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/.yg/hooks/resolve-config-on-write.sh\" \"$CLAUDE_PROJECT_DIR\""
+          }
+        ]
+      }
+    ]
+  }
+}
